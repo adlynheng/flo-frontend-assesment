@@ -1,0 +1,25 @@
+#root {
+  margin: 0;
+  min-width: 100vw;
+}
+
+main {
+  padding-inline: 138px;
+  display: flex;
+  /* background-color: #FBFBFC; */
+  justify-content: center;
+  align-items: center;
+}
+
+.loader {
+  animation: loader-spin infinite 2.5s linear;
+}
+
+@keyframes loader-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
