@@ -1,7 +1,7 @@
 import { Button } from '@base-ui/react/button';
 import { Download, Undo2 } from 'lucide-react';
 
-const StatusBar = ({ totalStatements, totalReadings, dispatch }) => {
+const StatusBar = ({ totalStatements, totalReadings, uniqueNMIs, dispatch }) => {
     return (
         <div className="w-full flex justify-between items-center rounded-lg bg-white border border-zinc-200 py-2 pl-4 pr-2 mb-6">
             <div className="flex gap-4">
@@ -15,7 +15,7 @@ const StatusBar = ({ totalStatements, totalReadings, dispatch }) => {
                 </div>
                 <div className="flex gap-1">
                     <p className="font-light text-sm text-zinc-500 leading-6">Unique NMIs:</p>
-                    <span className="font-mono text-purple-700">4</span>
+                    <span className="font-mono text-purple-700">{uniqueNMIs}</span>
                 </div>
             </div>
             <div className="flex gap-2">

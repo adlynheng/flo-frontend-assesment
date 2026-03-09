@@ -7,7 +7,7 @@ function wait(ms) {
 
 self.onmessage = async function (e) {
   const csvFile = e.data;
-  await wait(10000); // uncomment to simulate a long processing time
+  // await wait(10000); // uncomment to simulate a long processing time
   Papa.parse(csvFile, {
     complete: (results, file) => {
       const processedData = processCSV(results.data);
