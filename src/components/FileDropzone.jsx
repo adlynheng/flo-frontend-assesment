@@ -1,17 +1,19 @@
 import Dropzone from 'react-dropzone';
 import { CloudUpload } from 'lucide-react';
-import { useState } from 'react';
 
-const FileDropzone = () => {
+const FileDropzone = ({ dispatch, setFile }) => {
 
-    const [file, setFile] = useState(null);
+    const handleDrop = (acceptedFiles) => {
+        dispatch({ type: 'FILE_DROPPED' })
+        setFile(acceptedFiles[0])
+    }
 
     return (
         <div className="w-2xl">
             <p className='text-center text-sm text-zinc-500 font-medium mb-4'>Convert NEM12 electrical meter readings to SQL INSERT statements </p>
-            <Dropzone onDrop={acceptedFiles => setFile(acceptedFiles[0])} maxFiles={1}> 
+            <Dropzone onDrop={handleDrop} maxFiles={1} accept={{'text/csv':[".csv"]}}> 
                 {({getRootProps, getInputProps}) => (
-                    <section className="flex bg-white outline-2 outline-dashed outline-neutral-200 py-24 rounded-md justify-center items-center">
+                    <section className="flex bg-white outline-2 outline-dashed outline-neutral-200 py-24 rounded-md justify-center items-center cursor-pointer">
                         <div {...getRootProps()}>
                             <input {...getInputProps()} />
                             <div className='flex justify-center'>

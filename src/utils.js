@@ -1,60 +1,68 @@
-/**
- * Renders a single INSERT statement with lightweight syntax colouring.
- * The SQL is tokenised line-by-line so we can apply colours without a
- * third-party highlighter.
- */
-function highlightSql(sql) {
-  return sql.split("\n").map((line, i) => {
-    // Header lines: INSERT INTO … / VALUES
-    if (/^INSERT INTO|^VALUES/.test(line.trimStart())) {
-      return (
-        <span key={i} className="block">
-          {line.split(/\b(INSERT INTO|VALUES|meter_readings)\b/).map((tok, j) =>
-            /^(INSERT INTO|VALUES|meter_readings)$/.test(tok) ? (
-              <span key={j} className="text-purple-600">
-                {tok}
-              </span>
-            ) : tok.includes("(nmi") ? (
-              <span key={j} className="text-slate-600">
-                {tok}
-              </span>
-            ) : (
-              <span key={j} className="text-slate-600">
-                {tok}
-              </span>
-            )
-          )}
-        </span>
-      );
-    }
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
-    // Value lines:  ('NMI', 'TIMESTAMP', CONSUMPTION),
-    if (/^\s+\(/.test(line)) {
-      // Parse the three values out
-      const match = line.match(
-        /^(\s*\()('(?:[^']*)')(\s*,\s*)('(?:[^']*)')(\s*,\s*)([\d.]+)(\)(?:,|;)?)(.*)$/
-      );
-      if (match) {
-        const [, open, nmi, comma1, ts, comma2, val, close] = match;
-        return (
-          <span key={i} className="block">
-            <span className="text-slate-500">{open}</span>
-            <span className="text-green-600">{nmi}</span>
-            <span className="text-slate-500">{comma1}</span>
-            <span className="text-amber-600">{ts}</span>
-            <span className="text-slate-500">{comma2}</span>
-            <span className="text-cyan-600">{val}</span>
-            <span className="text-slate-500">{close}</span>
-          </span>
-        );
-      }
-    }
+dayjs.extend(customParseFormat);
 
-    // Semicolons / misc
-    return (
-      <span key={i} className="block text-slate-600">
-        {line}
-      </span>
-    );
-  });
-}
+const IGNORE_RECORD = ["100", "400", "500", "900"];
+
+const formatDate = (date) => dayjs(date, "YYYYMMDD").format("YYYY-MM-DD");
+const formatTime = (start, i, interval) =>
+  start.add(i * interval, "minute").format("HH:mm:ss");
+
+export const processCSV = (parsedCSV) => {
+  // creates an object with the following structure:
+  // [
+  //   {
+  //     nmi: string,
+  //     n_readings: number,
+  //     date: string,
+  //     readings: [
+  //       {
+  //         time: string,
+  //         value: number
+  //       }, ...
+  //     ],
+  //   },
+  // ]
+
+  let result = [];
+  let currentReadings = [];
+  let currentNMI, currentDate, currentNReadings, currIntervalLength;
+
+  for (const record of parsedCSV) {
+    if (IGNORE_RECORD.includes(record[0])) continue;
+    else if (record[0] === "200") {
+      // update variables
+      currentNMI = record[1];
+      currIntervalLength = parseInt(record[8]);
+      currentNReadings = 24 * (60 / currIntervalLength);
+    } else if (record[0] === "300") {
+      currentDate = formatDate(record[1]);
+      const record_readings = record.slice(2, 2 + currentNReadings);
+      const startTime = dayjs(currentDate, "YYYY-MM-DD").startOf("day");
+
+      record_readings.forEach((value, i) => {
+        const timestamp = `${currentDate} ${formatTime(
+          startTime,
+          i,
+          currIntervalLength
+        )}`;
+        currentReadings.push({
+          timestamp,
+          value,
+        });
+      });
+
+      result.push({
+        nmi: currentNMI,
+        n_readings: currentNReadings,
+        date: currentDate,
+        readings: currentReadings,
+      });
+
+      currentReadings = [];
+    }
+  }
+
+  return result;
+};
